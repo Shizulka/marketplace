@@ -1,0 +1,268 @@
+ 
+  openapi: 3.0.3
+
+  info:
+    title: Cosmo Cats Intergalactic Marketplace API
+    description: API for managing cosmic products
+    version: 1.0.0
+
+  servers:
+    - url: http://localhost:8081
+      description: Local development server
+
+  tags:
+    - name: Products
+      description: Product management operations
+
+  paths:
+    /api/products:
+      post:
+        tags:
+          - Products
+        summary: Create a new product
+        operationId: createProduct
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductRequest'
+        responses:
+          '201':
+            description: Product successfully created
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductResponse'
+          '400':
+            description: Validation failed
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/ProblemDetail'
+
+      get:
+        tags:
+          - Products
+        summary: Get products with pagination
+        operationId: getProducts
+        parameters:
+          - name: page
+            in: query
+            required: false
+            description: Page number starting from 0
+            schema:
+              type: integer
+              minimum: 0
+              default: 0
+          - name: size
+            in: query
+            required: false
+            description: Number of products per page
+            schema:
+              type: integer
+              minimum: 1
+              default: 10
+        responses:
+          '200':
+            description: Products successfully retrieved
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PagedProductResponse'
+
+    /api/products/{id}:
+      get:
+        tags:
+          - Products
+        summary: Get product by ID
+        operationId: getProductById
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: Product identifier
+            schema:
+              type: integer
+              format: int64
+              minimum: 1
+        responses:
+          '200':
+            description: Product successfully retrieved
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductResponse'
+          '404':
+            description: Product not found
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/ProblemDetail'
+
+      put:
+        tags:
+          - Products
+        summary: Update product
+        operationId: updateProduct
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: Product identifier
+            schema:
+              type: integer
+              format: int64
+              minimum: 1
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductRequest'
+        responses:
+          '200':
+            description: Product successfully updated
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductResponse'
+          '400':
+            description: Validation failed
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/ProblemDetail'
+          '404':
+            description: Product not found
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/ProblemDetail'
+
+      delete:
+        tags:
+          - Products
+        summary: Delete product
+        operationId: deleteProduct
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: Product identifier
+            schema:
+              type: integer
+              format: int64
+              minimum: 1
+        responses:
+          '204':
+            description: Product successfully deleted
+          '404':
+            description: Product not found
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/ProblemDetail'
+
+  components:
+    schemas:
+      ProductRequest:
+        type: object
+        required:
+          - name
+          - price
+          - categoryId
+          - stockQuantity
+        properties:
+          name:
+            type: string
+            minLength: 3
+            maxLength: 100
+            description: Product name
+            example: Nebula Cat Bed
+          description:
+            type: string
+            maxLength: 500
+            description: Product description
+            example: A cozy bed for cosmic cats
+          price:
+            type: number
+            minimum: 0.01
+            description: Product price
+            example: 29.99
+          categoryId:
+            type: integer
+            format: int64
+            description: Product category identifier
+            example: 1
+          stockQuantity:
+            type: integer
+            minimum: 0
+            description: Available quantity
+            example: 10
+
+      ProductResponse:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int64
+            example: 1
+          name:
+            type: string
+            example: Galaxy Yarn Ball
+          description:
+            type: string
+            example: Antigravity yarn ball for cosmic cats
+          price:
+            type: number
+            example: 19.99
+          categoryId:
+            type: integer
+            format: int64
+            example: 1
+          stockQuantity:
+            type: integer
+            example: 10
+
+      PagedProductResponse:
+        type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/ProductResponse'
+          page:
+            type: integer
+            minimum: 0
+            example: 0
+          size:
+            type: integer
+            minimum: 1
+            example: 10
+          totalElements:
+            type: integer
+            format: int64
+            example: 3
+
+      ProblemDetail:
+        type: object
+        description: RFC 9457 problem details
+        properties:
+          type:
+            type: string
+            format: uri
+            example: https://cosmo-cats.market/errors/validation
+          title:
+            type: string
+            example: Validation failed
+          status:
+            type: integer
+            example: 400
+          detail:
+            type: string
+            example: Field 'price' must be greater than 0
+          instance:
+            type: string
+            format: uri-reference
+            example: /api/products

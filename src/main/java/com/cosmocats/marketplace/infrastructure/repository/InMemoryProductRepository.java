@@ -8,18 +8,16 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.UUID;
 
 @Repository
 public class InMemoryProductRepository implements ProductRepository {
 
     private final List<Product> products = new ArrayList<>();
 
-    private final AtomicLong idGenerator = new AtomicLong(1);
-
     public InMemoryProductRepository() {
         products.add(new Product(
-                idGenerator.getAndIncrement(),
+                UUID.randomUUID(),
                 "Galaxy Yarn Ball",
                 "Antigravity yarn ball for cosmic cats",
                 new BigDecimal("19.99"),
@@ -28,7 +26,7 @@ public class InMemoryProductRepository implements ProductRepository {
         ));
 
         products.add(new Product(
-                idGenerator.getAndIncrement(),
+                UUID.randomUUID(),
                 "Cosmic Milk",
                 "Fresh milk from the Milky Way",
                 new BigDecimal("7.50"),
@@ -37,7 +35,7 @@ public class InMemoryProductRepository implements ProductRepository {
         ));
 
         products.add(new Product(
-                idGenerator.getAndIncrement(),
+                UUID.randomUUID(),
                 "Comet Toy",
                 "Toy shaped like a flying comet",
                 new BigDecimal("12.99"),
@@ -48,7 +46,7 @@ public class InMemoryProductRepository implements ProductRepository {
 
     @Override
     public Product save(Product product) {
-        product.setId(idGenerator.getAndIncrement());
+        product.setId(UUID.randomUUID());
         products.add(product);
         return product;
     }
@@ -59,14 +57,14 @@ public class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
-    public Optional<Product> findById(Long id) {
+    public Optional<Product> findById(UUID id) {
         return products.stream()
                 .filter(product -> product.getId().equals(id))
                 .findFirst();
     }
 
     @Override
-    public Optional<Product> update(Long id, Product product) {
+    public Optional<Product> update(UUID id, Product product) {
         Optional<Product> existingProduct = findById(id);
 
         if (existingProduct.isEmpty()) {
@@ -85,7 +83,7 @@ public class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
-    public boolean deleteById(Long id) {
+    public boolean deleteById(UUID id) {
         return products.removeIf(product -> product.getId().equals(id));
     }
 }

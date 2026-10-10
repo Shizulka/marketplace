@@ -1,17 +1,18 @@
 package com.cosmocats.marketplace.domain.model;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public class Product {
 
-    private Long id;
+    private UUID id;
     private String name;
     private String description;
     private BigDecimal price;
     private Long categoryId;
     private Integer stockQuantity;
 
-    public Product(Long id, String name, String description, BigDecimal price, Long categoryId, Integer stockQuantity) {
+    public Product(UUID id, String name, String description, BigDecimal price, Long categoryId, Integer stockQuantity) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -20,11 +21,11 @@ public class Product {
         this.stockQuantity = stockQuantity;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

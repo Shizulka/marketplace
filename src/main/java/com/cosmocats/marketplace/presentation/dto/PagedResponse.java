@@ -9,9 +9,6 @@ public class PagedResponse<T> {
     private int size;
     private long totalElements;
 
-    public PagedResponse() {
-    }
-
     public PagedResponse(
             List<T> content,
             int page,

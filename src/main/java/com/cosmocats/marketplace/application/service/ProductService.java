@@ -6,6 +6,7 @@ import com.cosmocats.marketplace.presentation.dto.PagedResponse;
 import org.springframework.stereotype.Service;
 import com.cosmocats.marketplace.application.exception.ProductNotFoundException;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ProductService {
@@ -21,48 +22,40 @@ public class ProductService {
     }
 
     public PagedResponse<Product> findAll(int page, int size) {
+        long from = (long) page * size;
         List<Product> products = productRepository.findAll();
+        int total = products.size();
 
-        int totalElements = products.size();
-
-        int fromIndex = page * size;
-
-        if (fromIndex >= totalElements) {
+        if (from >= total) {
             return new PagedResponse<>(
-                    List.of(),
-                    page,
-                    size,
-                    totalElements
+                    List.of(), page, size, total
             );
         }
 
-        int toIndex = Math.min(fromIndex + size, totalElements);
-
-        List<Product> pagedProducts = products.subList(fromIndex, toIndex);
+        int fromIndex = (int) from;
+        int toIndex = (int) Math.min(from + size, total);
 
         return new PagedResponse<>(
-                pagedProducts,
-                page,
-                size,
-                totalElements
+                products.subList(fromIndex, toIndex),
+                page, size, total
         );
     }
 
-    public Product findById(Long id) {
+    public Product findById(UUID id) {
         return productRepository.findById(id)
                 .orElseThrow(() ->
                         new ProductNotFoundException(id)
                 );
     }
 
-    public Product update(Long id, Product product) {
+    public Product update(UUID id, Product product) {
         return productRepository.update(id, product)
                 .orElseThrow(() ->
                         new ProductNotFoundException(id)
                 );
     }
 
-    public void delete(Long id) {
+    public void delete(UUID id) {
         boolean deleted = productRepository.deleteById(id);
 
         if (!deleted) {

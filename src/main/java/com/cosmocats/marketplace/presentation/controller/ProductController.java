@@ -7,10 +7,12 @@ import com.cosmocats.marketplace.presentation.dto.ProductRequest;
 import com.cosmocats.marketplace.presentation.dto.ProductResponse;
 import com.cosmocats.marketplace.presentation.mapper.ProductMapper;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/products")
@@ -44,8 +46,8 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<PagedResponse<ProductResponse>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size
     ) {
         PagedResponse<Product> products =
                 productService.findAll(page, size);
@@ -66,7 +68,7 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> findById(
-            @PathVariable Long id
+            @PathVariable UUID id
     ) {
         Product product = productService.findById(id);
 
@@ -77,7 +79,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> update(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody ProductRequest request
     ) {
         Product product = productMapper.toDomain(request);
@@ -92,7 +94,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id
+            @PathVariable UUID id
     ) {
         productService.delete(id);
 

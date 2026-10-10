@@ -5,6 +5,7 @@ import com.cosmocats.marketplace.domain.model.Product;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ProductRepository {
 
@@ -12,9 +13,9 @@ public interface ProductRepository {
 
     List<Product> findAll();
 
-    Optional<Product> findById(Long id);
+    Optional<Product> findById(UUID id);
 
-    Optional<Product> update(Long id, Product product);
+    Optional<Product> update(UUID id, Product product);
 
-    boolean deleteById(Long id);
+    boolean deleteById(UUID id);
 }

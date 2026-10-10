@@ -1,10 +1,6 @@
 package com.cosmocats.marketplace.presentation.dto;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
@@ -22,6 +18,7 @@ public class ProductRequest {
     private BigDecimal price;
 
     @NotNull(message = "Category ID is required")
+    @Positive(message = "Category ID must be positive")
     private Long categoryId;
 
     @NotNull(message = "Stock quantity is required")

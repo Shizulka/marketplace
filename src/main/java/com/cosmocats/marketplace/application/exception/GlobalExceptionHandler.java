@@ -100,4 +100,23 @@ public class GlobalExceptionHandler {
         return problem;
 
     }
+    @ExceptionHandler(CurrencyNotSupportedException.class)
+    public ProblemDetail handleCurrencyNotSupported(
+            CurrencyNotSupportedException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Currency not supported");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(ExchangeRateUnavailableException.class)
+    public ProblemDetail handleExchangeRateUnavailable(
+            ExchangeRateUnavailableException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY, exception.getMessage());
+        problem.setTitle("Exchange rate service unavailable");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
 }

@@ -12,34 +12,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the code
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
+      # Set up JDK 17 (you can change to another version if needed)
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Gradle (with dependency cache)
-        uses: gradle/actions/setup-gradle@v4
+      # Cache Gradle dependencies
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-
 
       - name: Grant execute permission for Gradlew
         run: chmod +x ./gradlew
 
-      - name: Build and run tests with coverage
-        run: ./gradlew build jacocoTestReport --no-daemon
+      # Run Gradle build and tests with coverage
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          cache-disabled: true
+          generate-job-summary: false
 
+      # Upload the JaCoCo test coverage report
       - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: test-coverage-report
-          path: build/reports/jacoco/test/html
-
-      - name: Upload test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-report
-          path: build/reports/tests/test
+          path: build/reports/coverage/index.html

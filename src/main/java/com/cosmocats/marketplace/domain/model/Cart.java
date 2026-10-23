@@ -1,3 +1,4 @@
+/*
 package com.cosmocats.marketplace.domain.model;
 
 import java.util.List;
@@ -43,3 +44,4 @@ public class Cart {
         this.productIds = productIds;
     }
 }
+*/

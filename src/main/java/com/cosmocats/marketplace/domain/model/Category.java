@@ -1,3 +1,4 @@
+/*
 package com.cosmocats.marketplace.domain.model;
 
 import java.math.BigDecimal;
@@ -38,4 +39,4 @@ public class Category {
         this.description = description;
     }
 }
-
+ */

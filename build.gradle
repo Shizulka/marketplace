@@ -1,4 +1,3 @@
-
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.1.1'
@@ -29,16 +28,52 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+ext {
+	minimumCoveragePerFile = 0.6
+	filesExcludedFromCoverage = [
+			'**/*MarketplaceApplication.*'
+	]
+}
+
+jacoco {
+	reportsDirectory = layout.buildDirectory.dir('reports/coverage')
+}
+
 test {
 	useJUnitPlatform()
 	finalizedBy tasks.named('jacocoTestReport')
 }
 
+def coverageClassDirs = files(sourceSets.main.output.classesDirs.files.collect {
+	fileTree(dir: it, exclude: filesExcludedFromCoverage)
+})
+
 tasks.named('jacocoTestReport') {
 	dependsOn tasks.named('test')
+	classDirectories.setFrom(coverageClassDirs)
 
 	reports {
 		html.required = true
 		xml.required = true
+		html.outputLocation = layout.buildDirectory.dir('reports/coverage')
+	}
+
+	finalizedBy tasks.named('jacocoTestCoverageVerification')
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+	description = 'Fails the build when a source file has less line coverage than minimumCoveragePerFile'
+	classDirectories.setFrom(coverageClassDirs)
+
+	violationRules {
+		rule {
+			enabled = true
+			failOnViolation = true
+			element = 'SOURCEFILE'
+			limit {
+				counter = 'LINE'
+				minimum = minimumCoveragePerFile
+			}
+		}
 	}
 }

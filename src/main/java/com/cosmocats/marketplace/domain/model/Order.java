@@ -1,3 +1,4 @@
+/*
 package com.cosmocats.marketplace.domain.model;
 
 import java.math.BigDecimal;
@@ -63,3 +64,5 @@ public class Order {
         this.status = status;
     }
 }
+
+ */

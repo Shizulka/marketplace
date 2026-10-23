@@ -1,3 +1,4 @@
+
 package com.cosmocats.marketplace;
 
 import org.junit.jupiter.api.Test;
@@ -9,5 +10,4 @@ class MarketplaceApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

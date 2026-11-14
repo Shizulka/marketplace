@@ -1,6 +1,6 @@
-
 package com.cosmocats.marketplace.application.exception;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -116,6 +116,70 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_GATEWAY, exception.getMessage());
         problem.setTitle("Exchange rate service unavailable");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler({CategoryNotFoundException.class,
+            OrderNotFoundException.class,
+            CustomerNotFoundException.class})
+    public ProblemDetail handleEntityNotFound(
+            RuntimeException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND, exception.getMessage());
+        problem.setTitle("Resource not found");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ProblemDetail handleInsufficientStock(
+            InsufficientStockException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, exception.getMessage());
+        problem.setTitle("Insufficient stock");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(
+            DataIntegrityViolationException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "The request conflicts with existing data "
+                        + "(duplicate value or record is still referenced).");
+        problem.setTitle("Data integrity violation");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgument(
+            IllegalArgumentException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Invalid request");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ProblemDetail handleIllegalState(
+            IllegalStateException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, exception.getMessage());
+        problem.setTitle("Operation not allowed in the current state");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(ArithmeticException.class)
+    public ProblemDetail handleArithmetic(
+            ArithmeticException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Numeric value is out of the allowed range.");
+        problem.setTitle("Invalid request");
         problem.setInstance(URI.create(request.getRequestURI()));
         return problem;
     }

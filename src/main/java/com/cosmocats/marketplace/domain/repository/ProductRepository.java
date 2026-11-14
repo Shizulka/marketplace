@@ -13,6 +13,8 @@ public interface ProductRepository {
 
     List<Product> findAll();
 
+    ProductPage findPage(int page, int size);
+
     Optional<Product> findById(UUID id);
 
     Optional<Product> update(UUID id, Product product);

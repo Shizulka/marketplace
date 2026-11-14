@@ -22,16 +22,26 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'io.zonky.test:embedded-postgres:2.1.0'
 	testImplementation 'org.wiremock:wiremock-standalone:3.13.1'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 ext {
 	minimumCoveragePerFile = 0.6
+	minimumCoverageTotal = 0.8
 	filesExcludedFromCoverage = [
-			'**/*MarketplaceApplication.*'
+			'**/*MarketplaceApplication.*',
+			'**/persistence/entity/**',
+			'**/infrastructure/config/**'
 	]
 }
 
@@ -62,7 +72,7 @@ tasks.named('jacocoTestReport') {
 }
 
 tasks.named('jacocoTestCoverageVerification') {
-	description = 'Fails the build when a source file has less line coverage than minimumCoveragePerFile'
+	description = 'Fails the build when a source file is below minimumCoveragePerFile or total line coverage is below minimumCoverageTotal (80%)'
 	classDirectories.setFrom(coverageClassDirs)
 
 	violationRules {
@@ -73,6 +83,15 @@ tasks.named('jacocoTestCoverageVerification') {
 			limit {
 				counter = 'LINE'
 				minimum = minimumCoveragePerFile
+			}
+		}
+		rule {
+			enabled = true
+			failOnViolation = true
+			element = 'BUNDLE'
+			limit {
+				counter = 'LINE'
+				minimum = minimumCoverageTotal
 			}
 		}
 	}

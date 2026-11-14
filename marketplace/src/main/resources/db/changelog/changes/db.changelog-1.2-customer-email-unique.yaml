@@ -1,0 +1,30 @@
+# v1.2 — унікальний email користувача + індекс за статусом замовлення.
+databaseChangeLog:
+
+  - changeSet:
+      id: 1.2-001-unique-customer-email
+      author: Shizulka
+      changes:
+        - addUniqueConstraint:
+            tableName: customers
+            columnNames: email
+            constraintName: uq_customers_email
+      rollback:
+        - dropUniqueConstraint:
+            tableName: customers
+            constraintName: uq_customers_email
+
+  - changeSet:
+      id: 1.2-002-index-orders-status
+      author: Shizulka
+      changes:
+        - createIndex:
+            indexName: idx_orders_status
+            tableName: orders
+            columns:
+              - column:
+                  name: status
+      rollback:
+        - dropIndex:
+            indexName: idx_orders_status
+            tableName: orders

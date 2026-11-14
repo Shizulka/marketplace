@@ -1,0 +1,41 @@
+# v1.1 — унікальність назви товару в межах категорії + індекс для пошуку за назвою.
+databaseChangeLog:
+
+  - changeSet:
+      id: 1.1-001-unique-product-name-per-category
+      author: Shizulka
+      changes:
+        - addUniqueConstraint:
+            tableName: products
+            columnNames: category_id, name
+            constraintName: uq_products_category_name
+        # Складений унікальний індекс (category_id, name) вже обслуговує FK за category_id,
+        # тому окремий idx_products_category_id із v1.0 став зайвим.
+        - dropIndex:
+            indexName: idx_products_category_id
+            tableName: products
+      rollback:
+        - createIndex:
+            indexName: idx_products_category_id
+            tableName: products
+            columns:
+              - column:
+                  name: category_id
+        - dropUniqueConstraint:
+            tableName: products
+            constraintName: uq_products_category_name
+
+  - changeSet:
+      id: 1.1-002-index-product-name
+      author: Shizulka
+      changes:
+        - createIndex:
+            indexName: idx_products_name
+            tableName: products
+            columns:
+              - column:
+                  name: name
+      rollback:
+        - dropIndex:
+            indexName: idx_products_name
+            tableName: products

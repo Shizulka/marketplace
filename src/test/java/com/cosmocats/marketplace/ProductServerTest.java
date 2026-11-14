@@ -7,6 +7,7 @@ import com.cosmocats.marketplace.domain.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import com.cosmocats.marketplace.domain.repository.ProductPage;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,6 +57,16 @@ class ProductServerTest {
         return products;
     }
 
+    private void stubPages(List<Product> products) {
+        when(productRepository.findPage(anyInt(), anyInt())).thenAnswer(invocation -> {
+            int page = invocation.getArgument(0);
+            int size = invocation.getArgument(1);
+            int from = Math.min(page * size, products.size());
+            int to = Math.min(from + size, products.size());
+            return new ProductPage(products.subList(from, to), products.size());
+        });
+    }
+
     // CREATE
 
     @Test
@@ -80,7 +91,7 @@ class ProductServerTest {
     void findAllShouldReturnFirstPage() {
         List<Product> products = createProducts(5);
 
-        when(productRepository.findAll()).thenReturn(products);
+        stubPages(products);
 
         PagedResponse<Product> result = productService.findAll(0, 2);
 
@@ -97,7 +108,7 @@ class ProductServerTest {
     void findAllShouldReturnSecondPage() {
         List<Product> products = createProducts(5);
 
-        when(productRepository.findAll()).thenReturn(products);
+        stubPages(products);
 
         PagedResponse<Product> result = productService.findAll(1, 2);
 
@@ -114,7 +125,7 @@ class ProductServerTest {
     void findAllShouldReturnLastPartialPage() {
         List<Product> products = createProducts(5);
 
-        when(productRepository.findAll()).thenReturn(products);
+        stubPages(products);
 
         PagedResponse<Product> result = productService.findAll(2, 2);
 
@@ -130,7 +141,7 @@ class ProductServerTest {
     void findAllShouldReturnEmptyContentWhenPageIsOutOfRange() {
         List<Product> products = createProducts(5);
 
-        when(productRepository.findAll()).thenReturn(products);
+        stubPages(products);
 
         PagedResponse<Product> result = productService.findAll(3, 2);
 
@@ -142,7 +153,7 @@ class ProductServerTest {
 
     @Test
     void findAllShouldReturnEmptyContentWhenNoProductsExist() {
-        when(productRepository.findAll()).thenReturn(List.of());
+        stubPages(List.of());
 
         PagedResponse<Product> result = productService.findAll(0, 10);
 
@@ -157,7 +168,7 @@ class ProductServerTest {
     void findAllShouldReturnAllProductsWhenPageSizeIsLargeEnough() {
         List<Product> products = createProducts(3);
 
-        when(productRepository.findAll()).thenReturn(products);
+        stubPages(products);
 
         PagedResponse<Product> result = productService.findAll(0, 10);
 
@@ -169,12 +180,20 @@ class ProductServerTest {
     void findAllShouldReturnEmptyContentWhenPageStartsAtTotal() {
         List<Product> products = createProducts(4);
 
-        when(productRepository.findAll()).thenReturn(products);
+        stubPages(products);
 
         PagedResponse<Product> result = productService.findAll(2, 2);
 
         assertTrue(result.getContent().isEmpty());
         assertEquals(4L, result.getTotalElements());
+    }
+
+    @Test
+    void findAllShouldRejectInvalidPageParameters() {
+        assertThrows(IllegalArgumentException.class, () -> productService.findAll(-1, 10));
+        assertThrows(IllegalArgumentException.class, () -> productService.findAll(0, 0));
+        assertThrows(IllegalArgumentException.class, () -> productService.findAll(0, 101));
+        verifyNoInteractions(productRepository);
     }
 
     // FIND BY ID

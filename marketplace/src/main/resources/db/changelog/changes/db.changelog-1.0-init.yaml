@@ -1,0 +1,275 @@
+# v1.0 — початкове створення схеми: sequences, таблиці, FK, CHECK, індекси.
+databaseChangeLog:
+
+  # ---------- Sequences ----------
+  - changeSet:
+      id: 1.0-001-create-sequences
+      author: Shizulka
+      changes:
+        - createSequence:
+            sequenceName: categories_seq
+            startValue: 1
+            incrementBy: 1
+        - createSequence:
+            sequenceName: order_items_seq
+            startValue: 1
+            incrementBy: 1
+      rollback:
+        - dropSequence:
+            sequenceName: order_items_seq
+        - dropSequence:
+            sequenceName: categories_seq
+
+  # ---------- categories ----------
+  - changeSet:
+      id: 1.0-002-create-categories
+      author: Shizulka
+      changes:
+        - createTable:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  defaultValueSequenceNext: categories_seq
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_categories
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_categories_name
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+      rollback:
+        - dropTable:
+            tableName: categories
+
+  # ---------- products ----------
+  - changeSet:
+      id: 1.0-003-create-products
+      author: Shizulka
+      changes:
+        - createTable:
+            tableName: products
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_products
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+              - column:
+                  name: price
+                  type: NUMERIC(12,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_products_category
+                    references: categories(id)
+              - column:
+                  name: stock_quantity
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: ALTER TABLE products ADD CONSTRAINT ck_products_price CHECK (price >= 0.01)
+        - sql:
+            sql: ALTER TABLE products ADD CONSTRAINT ck_products_stock CHECK (stock_quantity >= 0)
+      rollback:
+        - dropTable:
+            tableName: products
+
+  # ---------- customers ----------
+  - changeSet:
+      id: 1.0-004-create-customers
+      author: Shizulka
+      changes:
+        - createTable:
+            tableName: customers
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_customers
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: full_name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: customers
+
+  # ---------- orders ----------
+  - changeSet:
+      id: 1.0-005-create-orders
+      author: Shizulka
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_orders
+                    nullable: false
+              - column:
+                  name: customer_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_orders_customer
+                    references: customers(id)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: NEW
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >
+              ALTER TABLE orders ADD CONSTRAINT ck_orders_status
+              CHECK (status IN ('NEW', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'))
+      rollback:
+        - dropTable:
+            tableName: orders
+
+  # ---------- order_items (зв'язок M:N orders <-> products) ----------
+  - changeSet:
+      id: 1.0-006-create-order-items
+      author: Shizulka
+      changes:
+        - createTable:
+            tableName: order_items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  defaultValueSequenceNext: order_items_seq
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_order_items
+                    nullable: false
+              - column:
+                  name: order_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_items_order
+                    references: orders(id)
+                    deleteCascade: true
+              - column:
+                  name: product_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_items_product
+                    references: products(id)
+              - column:
+                  name: quantity
+                  type: INT
+                  constraints:
+                    nullable: false
+              # ціна на момент покупки (знімок), а не похідна від products.price
+              - column:
+                  name: unit_price
+                  type: NUMERIC(12,2)
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: order_items
+            columnNames: order_id, product_id
+            constraintName: uq_order_items_order_product
+        - sql:
+            sql: ALTER TABLE order_items ADD CONSTRAINT ck_order_items_quantity CHECK (quantity > 0)
+        - sql:
+            sql: ALTER TABLE order_items ADD CONSTRAINT ck_order_items_unit_price CHECK (unit_price >= 0.01)
+      rollback:
+        - dropTable:
+            tableName: order_items
+
+  # ---------- Індекси на зовнішніх ключах (PostgreSQL не створює їх автоматично) ----------
+  - changeSet:
+      id: 1.0-007-create-indexes
+      author: Shizulka
+      changes:
+        - createIndex:
+            indexName: idx_products_category_id
+            tableName: products
+            columns:
+              - column:
+                  name: category_id
+        - createIndex:
+            indexName: idx_orders_customer_id
+            tableName: orders
+            columns:
+              - column:
+                  name: customer_id
+        - createIndex:
+            indexName: idx_order_items_product_id
+            tableName: order_items
+            columns:
+              - column:
+                  name: product_id
+      # idx на order_items(order_id) не потрібен: його покриває uq_order_items_order_product
+      rollback:
+        - dropIndex:
+            indexName: idx_order_items_product_id
+            tableName: order_items
+        - dropIndex:
+            indexName: idx_orders_customer_id
+            tableName: orders
+        - dropIndex:
+            indexName: idx_products_category_id
+            tableName: products

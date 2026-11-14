@@ -2,7 +2,12 @@ package com.cosmocats.marketplace;
 
 import com.cosmocats.marketplace.domain.model.Product;
 import com.cosmocats.marketplace.domain.repository.ProductRepository;
+import com.cosmocats.marketplace.infrastructure.persistence.entity.CategoryEntity;
+import com.cosmocats.marketplace.infrastructure.persistence.repository.CategoryJpaRepository;
+import com.cosmocats.marketplace.infrastructure.persistence.repository.ProductJpaRepository;
+import com.cosmocats.marketplace.support.AbstractPostgresTest;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class ProductPriceControllerWireMockTest {
+class ProductPriceControllerWireMockTest extends AbstractPostgresTest {
 
     @RegisterExtension
     static WireMockExtension wireMock = WireMockExtension.newInstance()
@@ -36,11 +41,23 @@ class ProductPriceControllerWireMockTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ProductRepository productRepository;
+    @Autowired private CategoryJpaRepository categoryRepository;
+    @Autowired private ProductJpaRepository productJpaRepository;
+
+    /** БД спільна для всіх тестів, тому прибираємо за собою. */
+    @AfterEach
+    void cleanUp() {
+        productJpaRepository.deleteAll();
+        categoryRepository.deleteAll();
+    }
 
     private Product saveProduct() {
+        // продукт тепер зберігається в БД, тому категорія має існувати; імена унікальні між тестами
+        Long categoryId = categoryRepository
+                .save(new CategoryEntity("Toys-" + UUID.randomUUID(), null)).getId();
         return productRepository.save(new Product(
-                UUID.randomUUID(), "Cosmic Cat Toy", "A toy",
-                new BigDecimal("20.00"), 1L, 5));
+                null, "Cosmic Cat Toy", "A toy",
+                new BigDecimal("20.00"), categoryId, 5));
     }
 
     @Test

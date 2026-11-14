@@ -4,11 +4,13 @@ import com.cosmocats.marketplace.domain.model.Product;
 import com.cosmocats.marketplace.domain.repository.ProductRepository;
 import com.cosmocats.marketplace.presentation.dto.PagedResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.cosmocats.marketplace.application.exception.ProductNotFoundException;
-import java.util.List;
+import com.cosmocats.marketplace.domain.repository.ProductPage;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -21,26 +23,19 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    @Transactional(readOnly = true)
     public PagedResponse<Product> findAll(int page, int size) {
-        long from = (long) page * size;
-        List<Product> products = productRepository.findAll();
-        int total = products.size();
-
-        if (from >= total) {
-            return new PagedResponse<>(
-                    List.of(), page, size, total
-            );
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must not be negative.");
         }
-
-        int fromIndex = (int) from;
-        int toIndex = (int) Math.min(from + size, total);
-
-        return new PagedResponse<>(
-                products.subList(fromIndex, toIndex),
-                page, size, total
-        );
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException("Page size must be between 1 and 100.");
+        }
+        ProductPage result = productRepository.findPage(page, size);
+        return new PagedResponse<>(result.content(), page, size, result.totalElements());
     }
 
+    @Transactional(readOnly = true)
     public Product findById(UUID id) {
         return productRepository.findById(id)
                 .orElseThrow(() ->

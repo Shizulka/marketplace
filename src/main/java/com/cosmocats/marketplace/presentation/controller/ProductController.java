@@ -8,6 +8,8 @@ import com.cosmocats.marketplace.presentation.dto.ProductResponse;
 import com.cosmocats.marketplace.presentation.mapper.ProductMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +17,7 @@ import java.net.URI;
 import java.util.UUID;
 
 @RestController
+@Validated
 @RequestMapping("/api/products")
 public class ProductController {
 
@@ -47,7 +50,7 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<PagedResponse<ProductResponse>> findAll(
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) int size
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size
     ) {
         PagedResponse<Product> products =
                 productService.findAll(page, size);

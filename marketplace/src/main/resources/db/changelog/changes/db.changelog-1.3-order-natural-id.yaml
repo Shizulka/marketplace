@@ -1,0 +1,40 @@
+# v1.3 — Natural ID для замовлення: order_number (унікальний бізнес-ідентифікатор).
+databaseChangeLog:
+
+  - changeSet:
+      id: 1.3-001-add-order-number
+      author: Shizulka
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: order_number
+                  type: VARCHAR(30)
+        # backfill для вже існуючих замовлень
+        - sql:
+            sql: >
+              UPDATE orders
+              SET order_number = 'CC-' || UPPER(SUBSTRING(REPLACE(CAST(id AS VARCHAR), '-', ''), 1, 10))
+              WHERE order_number IS NULL
+        - addNotNullConstraint:
+            tableName: orders
+            columnName: order_number
+            columnDataType: VARCHAR(30)
+      rollback:
+        - dropColumn:
+            tableName: orders
+            columnName: order_number
+
+  - changeSet:
+      id: 1.3-002-unique-order-number
+      author: Shizulka
+      changes:
+        - addUniqueConstraint:
+            tableName: orders
+            columnNames: order_number
+            constraintName: uq_orders_order_number
+      rollback:
+        - dropUniqueConstraint:
+            tableName: orders
+            constraintName: uq_orders_order_number

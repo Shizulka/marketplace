@@ -1,0 +1,186 @@
+package com.cosmocats.marketplace.application.exception;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.net.URI;
+import java.util.stream.Collectors;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ProblemDetail handleProductNotFound(
+            ProductNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
+        );
+
+        problem.setType(URI.create(
+                "https://cosmo-cats.market/errors/product-not-found"
+        ));
+        problem.setTitle("Product not found");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return problem;
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidation(
+            MethodArgumentNotValidException exception,
+            HttpServletRequest request
+    ) {
+        String details = exception.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> "Field '" + error.getField()
+                        + "': " + error.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                details
+        );
+
+        problem.setType(URI.create(
+                "https://cosmo-cats.market/errors/validation"
+        ));
+        problem.setTitle("Validation failed");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return problem;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableRequest(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request) {
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Request body is missing or contains invalid JSON."
+        );
+
+        problem.setTitle("Invalid request body");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return problem;
+
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolation(
+            jakarta.validation.ConstraintViolationException exception,
+            HttpServletRequest request) {
+
+        String details = exception.getConstraintViolations()
+                .stream()
+                .map(violation -> violation.getMessage())
+                .collect(Collectors.joining("; "));
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                details
+        );
+
+        problem.setType(URI.create(
+                "https://cosmo-cats.market/errors/validation"
+        ));
+        problem.setTitle("Invalid request parameters");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return problem;
+
+    }
+    @ExceptionHandler(CurrencyNotSupportedException.class)
+    public ProblemDetail handleCurrencyNotSupported(
+            CurrencyNotSupportedException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Currency not supported");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(ExchangeRateUnavailableException.class)
+    public ProblemDetail handleExchangeRateUnavailable(
+            ExchangeRateUnavailableException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY, exception.getMessage());
+        problem.setTitle("Exchange rate service unavailable");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler({CategoryNotFoundException.class,
+            OrderNotFoundException.class,
+            CustomerNotFoundException.class})
+    public ProblemDetail handleEntityNotFound(
+            RuntimeException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND, exception.getMessage());
+        problem.setTitle("Resource not found");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ProblemDetail handleInsufficientStock(
+            InsufficientStockException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, exception.getMessage());
+        problem.setTitle("Insufficient stock");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(
+            DataIntegrityViolationException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "The request conflicts with existing data "
+                        + "(duplicate value or record is still referenced).");
+        problem.setTitle("Data integrity violation");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgument(
+            IllegalArgumentException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Invalid request");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ProblemDetail handleIllegalState(
+            IllegalStateException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, exception.getMessage());
+        problem.setTitle("Operation not allowed in the current state");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+
+    @ExceptionHandler(ArithmeticException.class)
+    public ProblemDetail handleArithmetic(
+            ArithmeticException exception, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Numeric value is out of the allowed range.");
+        problem.setTitle("Invalid request");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        return problem;
+    }
+}
